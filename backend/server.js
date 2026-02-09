@@ -13,9 +13,24 @@ require('dotenv').config();
 
 const app = express();
 
-// CORS Configuration - Restrict to frontend URL
+// CORS Configuration - Allow both local and production URLs
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: function(origin, callback) {
+        const allowedOrigins = [
+            'http://localhost:5173',
+            'http://localhost:3000',
+            process.env.FRONTEND_URL,
+            'https://raisoni.netlify.app',
+            'https://raisoni-frontend.netlify.app'
+        ].filter(Boolean);
+        
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.log('CORS blocked origin:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     optionsSuccessStatus: 200
 };
@@ -31,7 +46,21 @@ app.use('/api/projects', require('./routes/projects'));
 app.use('/api/admin', require('./routes/admin'));
 
 // Basic health check route
-app.get('/', (req, res) => res.send('API Running'));
+app.get('/', (req, res) => res.json({ msg: '✅ API is running!' }));
+
+// 404 Handler
+app.use((req, res) => {
+    res.status(404).json({ msg: 'Route not found', path: req.path });
+});
+
+// Error Handler
+app.use((err, req, res, next) => {
+    console.error('Error:', err.message);
+    res.status(err.status || 500).json({ 
+        msg: err.message || 'Server Error',
+        status: err.status || 500
+    });
+});
 
 const PORT = process.env.PORT || 5001;
 
