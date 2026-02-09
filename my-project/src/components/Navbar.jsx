@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Folder, LayoutDashboard, Info, User, MessageSquare, LogOut, LogIn } from 'lucide-react';
+import { Home, Folder, LayoutDashboard, Info, User, MessageSquare, LogOut, LogIn, Settings } from 'lucide-react';
 
-export default function Navbar({ isAuthenticated, onLogout }) {
+export default function Navbar({ isAuthenticated, isAdmin, onLogout }) {
     const location = useLocation();
 
     const isActive = (path) => location.pathname === path;
@@ -27,15 +27,20 @@ export default function Navbar({ isAuthenticated, onLogout }) {
                         <Link to="/" className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                             PublicPulse
                         </Link>
+                        {isAdmin && (
+                            <span className="ml-3 px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">
+                                ADMIN
+                            </span>
+                        )}
                     </div>
 
                     <div className="hidden md:flex items-center space-x-4">
                         {!isAuthenticated ? (
                             <>
                                 <NavItem to="/" icon={Home} label="Home" />
-                                <NavItem to="/projects" icon={Folder} label="Projects" /> {/* Note: Diagram says /project AND /projects, using /projects for list */}
+                                <NavItem to="/projects" icon={Folder} label="Projects" />
                                 <NavItem to="/Pages" icon={LayoutDashboard} label="Dashboard" />
-                                <NavItem to="/about" icon={Info} label="About" /> {/* Diagram says About Link -> About /projects? Assuming typo, kept /about or maybe it should be /projects as per diagram? Diagram says "ABOUT Link -> ABOUT (/projects)". I will handle this in routing if needed, but standard is /about. I will stick to /about for clarity unless strict adherence is forced on the weird part. */}
+                                <NavItem to="/about" icon={Info} label="About" />
                                 <span className="h-6 w-px bg-gray-200 mx-2"></span>
                                 <Link
                                     to="/login"
@@ -47,10 +52,21 @@ export default function Navbar({ isAuthenticated, onLogout }) {
                             </>
                         ) : (
                             <>
-                                <NavItem to="/Profile" icon={User} label="Profile" />
-                                <NavItem to="/Pages" icon={LayoutDashboard} label="Dashboard" />
-                                <NavItem to="/projects" icon={Folder} label="Projects" />
-                                <NavItem to="/Feedback" icon={MessageSquare} label="Feedback" />
+                                {isAdmin ? (
+                                    <>
+                                        <NavItem to="/admin" icon={Settings} label="Admin Dashboard" />
+                                        <NavItem to="/admin/users" icon={User} label="Users" />
+                                        <NavItem to="/admin/feedback" icon={MessageSquare} label="Feedback" />
+                                        <NavItem to="/admin/projects" icon={Folder} label="Projects" />
+                                    </>
+                                ) : (
+                                    <>
+                                        <NavItem to="/Profile" icon={User} label="Profile" />
+                                        <NavItem to="/Pages" icon={LayoutDashboard} label="Dashboard" />
+                                        <NavItem to="/projects" icon={Folder} label="Projects" />
+                                        <NavItem to="/Feedback" icon={MessageSquare} label="Feedback" />
+                                    </>
+                                )}
                                 <span className="h-6 w-px bg-gray-200 mx-2"></span>
                                 <button
                                     onClick={onLogout}

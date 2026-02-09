@@ -1,311 +1,346 @@
-import { useState } from 'react';
-import { Search, MapPin, Filter, Star, MessageSquare, Anchor, ChevronDown } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { Search, MapPin, Star, MessageSquare, X, RefreshCw } from 'lucide-react';
 
 export default function Projects() {
+    const [projects, setProjects] = useState([]);
+    const [filteredProjects, setFilteredProjects] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedState, setSelectedState] = useState('All');
     const [selectedSector, setSelectedSector] = useState('All');
     const [selectedStatus, setSelectedStatus] = useState('All');
+    const [loading, setLoading] = useState(true);
+    const [selectedProject, setSelectedProject] = useState(null);
+    const [projectFeedback, setProjectFeedback] = useState([]);
+    const [feedbackLoading, setFeedbackLoading] = useState(false);
 
-    const projects = [
-        {
-            id: 1,
-            title: "Renovation of a School Project",
-            location: "New York",
-            sector: "Renovation",
-            status: "On hold",
-            rating: 4.1,
-            feedback: 12
-        },
-        {
-            id: 2,
-            title: "Commercial Center Construction Project",
-            location: "Georgia",
-            sector: "Construction",
-            status: "On track",
-            rating: 3.1,
-            feedback: 19
-        },
-        {
-            id: 3,
-            title: "Sports Stadium Upgrade Project",
-            location: "Florida",
-            sector: "Other",
-            status: "Completed",
-            rating: 4.5,
-            feedback: 6
-        },
-        {
-            id: 4,
-            title: "Innovation of a Classroom Project",
-            location: "Florida",
-            sector: "Innovation",
-            status: "On hold",
-            rating: 3.8,
-            feedback: 8
-        },
-        {
-            id: 5,
-            title: "Bridge Maintenance Project",
-            location: "Florida",
-            sector: "Maintenance",
-            status: "On track",
-            rating: 3.1,
-            feedback: 9
-        },
-        {
-            id: 6,
-            title: "Road Expansion Project",
-            location: "Illinois",
-            sector: "Infrastructure",
-            status: "Behind",
-            rating: 4.5,
-            feedback: 8
-        },
-        {
-            id: 7,
-            title: "Airport Expansion Project",
-            location: "Michigan",
-            sector: "Other",
-            status: "On hold",
-            rating: 3.2,
-            feedback: 9
-        },
-        {
-            id: 8,
-            title: "Building a Park Project",
-            location: "New York",
-            sector: "Other",
-            status: "On track",
-            rating: 3.9,
-            feedback: 9
-        },
-        {
-            id: 9,
-            title: "Office Building Renovation Project",
-            location: "North Carolina",
-            sector: "Renovation",
-            status: "Behind",
-            rating: 4.2,
-            feedback: 18
-        },
-        {
-            id: 10,
-            title: "Apartment Complex Development Project",
-            location: "California",
-            sector: "Other",
-            status: "On track",
-            rating: 3.9,
-            feedback: 28
-        },
-        {
-            id: 11,
-            title: "Public Library Renovation Project",
-            location: "Pennsylvania",
-            sector: "Renovation",
-            status: "On hold",
-            rating: 3.1,
-            feedback: 9
-        },
-        {
-            id: 12,
-            title: "Construction of a Hospital Wing Project",
-            location: "Michigan",
-            sector: "Construction",
-            status: "On hold",
-            rating: 4.9,
-            feedback: 18
+    const states = ['All', 'New York', 'Georgia', 'Florida', 'Illinois', 'Michigan', 'North Carolina', 'California', 'Pennsylvania'];
+    const sectors = ['All', 'Renovation', 'Construction', 'Other', 'Innovation', 'Maintenance', 'Infrastructure'];
+    const statuses = ['All', 'On Track', 'On hold', 'Behind', 'Completed'];
+
+    useEffect(() => {
+        fetchProjects();
+        
+        // Refresh projects when page comes into focus
+        const handleFocus = () => {
+            console.log('📄 Projects page focused, refreshing...');
+            fetchProjects();
+        };
+        
+        window.addEventListener('focus', handleFocus);
+        
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, []);
+
+    useEffect(() => {
+        filterProjects();
+    }, [projects, searchTerm, selectedState, selectedSector, selectedStatus]);
+
+    const fetchProjects = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch('http://localhost:5001/api/projects');
+            
+            if (response.ok) {
+                const data = await response.json();
+                setProjects(data);
+            }
+        } catch (error) {
+            console.error('Error fetching projects:', error);
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
 
-    const filters = {
-        states: ["New York", "Georgia", "Florida", "Illinois", "Michigan", "North Carolina", "California", "Pennsylvania"],
-        sectors: ["Renovation", "Construction", "Other", "Innovation", "Maintenance", "Infrastructure"],
-        statuses: ["On Track", "On hold", "Behind", "Completed"]
+    const filterProjects = () => {
+        let filtered = projects;
+
+        // Search filter
+        if (searchTerm) {
+            filtered = filtered.filter(p =>
+                p.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.state?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        // State filter
+        if (selectedState !== 'All') {
+            filtered = filtered.filter(p => p.state === selectedState);
+        }
+
+        // Sector filter
+        if (selectedSector !== 'All') {
+            filtered = filtered.filter(p => p.sector === selectedSector);
+        }
+
+        // Status filter
+        if (selectedStatus !== 'All') {
+            filtered = filtered.filter(p => p.status === selectedStatus);
+        }
+
+        setFilteredProjects(filtered);
     };
 
     const getStatusColor = (status) => {
-        switch (status.toLowerCase()) {
-            case 'on track': return 'bg-green-100 text-green-700 border-green-200';
-            case 'on hold': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-            case 'behind': return 'bg-red-100 text-red-700 border-red-200';
-            case 'completed': return 'bg-blue-100 text-blue-700 border-blue-200';
-            default: return 'bg-gray-100 text-gray-700 border-gray-200';
+        switch(status) {
+            case 'Completed': return 'bg-green-100 text-green-700';
+            case 'On Track': return 'bg-blue-100 text-blue-700';
+            case 'Behind': return 'bg-red-100 text-red-700';
+            case 'On hold': return 'bg-yellow-100 text-yellow-700';
+            default: return 'bg-gray-100 text-gray-700';
         }
     };
 
-    const filteredProjects = projects.filter(project => {
-        const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesState = selectedState === 'All' || project.location === selectedState;
-        const matchesSector = selectedSector === 'All' || project.sector === selectedSector;
-        const matchesStatus = selectedStatus === 'All' || project.status.toLowerCase() === selectedStatus.toLowerCase();
+    const fetchProjectFeedback = async (projectId) => {
+        try {
+            setFeedbackLoading(true);
+            const response = await fetch('http://localhost:5001/api/feedback');
+            
+            if (response.ok) {
+                const allFeedback = await response.json();
+                // Filter feedback for this specific project (handle both string and object projectId)
+                const filtered = allFeedback.filter(f => 
+                    f.projectId === projectId || 
+                    (typeof f.projectId === 'object' && f.projectId._id === projectId) ||
+                    (typeof f.projectId === 'object' && f.projectId === projectId)
+                );
+                setProjectFeedback(filtered);
+            }
+        } catch (error) {
+            console.error('Error fetching feedback:', error);
+        } finally {
+            setFeedbackLoading(false);
+        }
+    };
 
-        return matchesSearch && matchesState && matchesSector && matchesStatus;
-    });
+    const handleViewFeedback = (project) => {
+        setSelectedProject(project);
+        fetchProjectFeedback(project._id);
+    };
+
+    const closeFeedbackModal = () => {
+        setSelectedProject(null);
+        setProjectFeedback([]);
+        // Refresh projects to get updated feedback count
+        fetchProjects();
+    };
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-20 pb-12">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-24 pb-12">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
                 {/* Header */}
+                <div className="text-center mb-12 flex flex-col items-center">
+                    <div className="flex items-center justify-center gap-3 mb-4">
+                        <h1 className="text-4xl font-bold text-gray-900">Project Directory</h1>
+                        <button
+                            onClick={fetchProjects}
+                            disabled={loading}
+                            className="p-2 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+                            title="Refresh project data"
+                        >
+                            <RefreshCw size={24} className={`text-gray-600 ${loading ? 'animate-spin' : ''}`} />
+                        </button>
+                    </div>
+                    <p className="text-lg text-gray-600">Browse and explore public infrastructure projects across India</p>
+                </div>
+
+                {/* Search */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">Project Directory</h1>
-                    <p className="text-gray-600 mt-2">Browse and explore public infrastructure projects across India</p>
-                </div>
-
-                <div className="flex flex-col lg:flex-row gap-8">
-
-                    {/* Sidebar Filters */}
-                    <div className="w-full lg:w-64 flex-shrink-0 space-y-8">
-                        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                            <div className="flex items-center space-x-2 mb-6 font-semibold text-gray-900">
-                                <Filter size={20} />
-                                <span>Filters</span>
-                            </div>
-
-                            <div className="space-y-6">
-                                {/* State Filter */}
-                                <div>
-                                    <h3 className="text-sm font-medium text-gray-900 mb-3">State</h3>
-                                    <div className="space-y-2">
-                                        {filters.states.map(state => (
-                                            <label key={state} className="flex items-center space-x-2 cursor-pointer group">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedState === state}
-                                                    onChange={() => setSelectedState(selectedState === state ? 'All' : state)}
-                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <span className="text-sm text-gray-600 group-hover:text-blue-600 transition-colors">{state}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="h-px bg-gray-100"></div>
-
-                                {/* Sector Filter */}
-                                <div>
-                                    <h3 className="text-sm font-medium text-gray-900 mb-3">Sector</h3>
-                                    <div className="space-y-2">
-                                        {filters.sectors.map(sector => (
-                                            <label key={sector} className="flex items-center space-x-2 cursor-pointer group">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedSector === sector}
-                                                    onChange={() => setSelectedSector(selectedSector === sector ? 'All' : sector)}
-                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <span className="text-sm text-gray-600 group-hover:text-blue-600 transition-colors">{sector}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="h-px bg-gray-100"></div>
-
-                                {/* Status Filter */}
-                                <div>
-                                    <h3 className="text-sm font-medium text-gray-900 mb-3">Status</h3>
-                                    <div className="space-y-2">
-                                        {filters.statuses.map(status => (
-                                            <label key={status} className="flex items-center space-x-2 cursor-pointer group">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedStatus.toLowerCase() === status.toLowerCase()}
-                                                    onChange={() => setSelectedStatus(selectedStatus.toLowerCase() === status.toLowerCase() ? 'All' : status)}
-                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <span className="text-sm text-gray-600 group-hover:text-blue-600 transition-colors">{status}</span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Main Content */}
-                    <div className="flex-1">
-                        {/* Search Bar */}
-                        <div className="relative mb-6">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                            <input
-                                type="text"
-                                placeholder="Search projects by name or authority..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all shadow-sm"
-                            />
-                        </div>
-
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-gray-600 font-medium">Showing {filteredProjects.length} projects</h2>
-                        </div>
-
-                        {/* Projects Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredProjects.map((project) => (
-                                <motion.div
-                                    layout
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    key={project.id}
-                                    className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm hover:shadow-lg transition-all group"
-                                >
-                                    <div className="flex justify-between items-start mb-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(project.status)}`}>
-                                            {project.status}
-                                        </span>
-                                        <div className="flex items-center space-x-1 bg-yellow-50 px-2 py-1 rounded-md border border-yellow-100">
-                                            <Star size={14} className="fill-yellow-400 text-yellow-400" />
-                                            <span className="text-sm font-bold text-gray-900">{project.rating}</span>
-                                        </div>
-                                    </div>
-
-                                    <h3 className="text-lg font-bold text-gray-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors">
-                                        {project.title}
-                                    </h3>
-
-                                    <div className="space-y-2 mb-6">
-                                        <div className="flex items-center text-gray-500 text-sm">
-                                            <MapPin size={16} className="mr-2 text-gray-400" />
-                                            {project.location}
-                                        </div>
-                                        <div className="flex items-center text-gray-500 text-sm">
-                                            <Anchor size={16} className="mr-2 text-gray-400" />
-                                            {project.sector}
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                                        <div className="flex items-center text-sm text-gray-500">
-                                            <MessageSquare size={16} className="mr-1.5" />
-                                            {project.feedback} feedback
-                                        </div>
-                                        <button className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors">
-                                            view feedback
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </div>
-
-                        {filteredProjects.length === 0 && (
-                            <div className="text-center py-20">
-                                <p className="text-gray-500 text-lg">No projects found matching your criteria.</p>
-                                <button
-                                    onClick={() => { setSelectedState('All'); setSelectedSector('All'); setSelectedStatus('All'); setSearchTerm(''); }}
-                                    className="mt-4 text-blue-600 font-semibold hover:underline"
-                                >
-                                    Clear all filters
-                                </button>
-                            </div>
-                        )}
+                    <div className="relative">
+                        <Search className="absolute left-4 top-3 text-gray-400" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Search projects by name or state..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
+                        />
                     </div>
                 </div>
+
+                {/* Filters */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+                    <h3 className="font-semibold text-gray-900 mb-4">Filters</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* State Filter */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+                            <select
+                                value={selectedState}
+                                onChange={(e) => setSelectedState(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                                {states.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+
+                        {/* Sector Filter */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Sector</label>
+                            <select
+                                value={selectedSector}
+                                onChange={(e) => setSelectedSector(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                                {sectors.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+
+                        {/* Status Filter */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                            <select
+                                value={selectedStatus}
+                                onChange={(e) => setSelectedStatus(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            >
+                                {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Projects Count */}
+                <div className="mb-6 text-gray-600">
+                    <p>Showing <span className="font-semibold text-gray-900">{filteredProjects.length}</span> projects</p>
+                </div>
+
+                {/* Projects Grid */}
+                {loading ? (
+                    <div className="text-center py-12">
+                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                        <p className="text-gray-600 mt-4">Loading projects...</p>
+                    </div>
+                ) : filteredProjects.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredProjects.map((project) => (
+                            <div key={project._id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-lg transition-shadow p-6">
+                                {/* Status Badge */}
+                                <div className="flex justify-between items-start mb-4">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(project.status)}`}>
+                                        {project.status}
+                                    </span>
+                                    <span className="text-lg font-bold text-gray-900">{project.rating}⭐</span>
+                                </div>
+
+                                {/* Project Title */}
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                                    {project.title}
+                                </h3>
+
+                                {/* Location */}
+                                <div className="flex items-center text-gray-600 mb-3">
+                                    <MapPin size={16} className="mr-1 flex-shrink-0" />
+                                    <span className="text-sm">{project.state}</span>
+                                </div>
+
+                                {/* Sector Badge */}
+                                <div className="mb-4">
+                                    <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded">
+                                        {project.sector}
+                                    </span>
+                                </div>
+
+                                {/* Description */}
+                                {project.description && (
+                                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                                        {project.description}
+                                    </p>
+                                )}
+
+                                {/* Feedback Count */}
+                                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                                    <div className="flex items-center text-gray-600 text-sm">
+                                        <MessageSquare size={16} className="mr-1" />
+                                        <span>{project.feedbackCount} feedback</span>
+                                    </div>
+                                    <button 
+                                        onClick={() => handleViewFeedback(project)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                                    >
+                                        View Feedback
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+                        <p className="text-gray-500 text-lg">No projects found matching your filters</p>
+                    </div>
+                )}
             </div>
+
+            {/* Feedback Modal */}
+            {selectedProject && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto">
+                        {/* Modal Header */}
+                        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900">{selectedProject.title}</h2>
+                                <p className="text-gray-600 text-sm mt-1">{selectedProject.state} • {selectedProject.sector}</p>
+                            </div>
+                            <button
+                                onClick={closeFeedbackModal}
+                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="p-6">
+                            {feedbackLoading ? (
+                                <div className="text-center py-8">
+                                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                    <p className="text-gray-600 mt-3">Loading feedback...</p>
+                                </div>
+                            ) : projectFeedback.length > 0 ? (
+                                <div className="space-y-4">
+                                    {projectFeedback.map((feedback) => (
+                                        <div key={feedback._id} className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                                            {/* User Info */}
+                                            {feedback.user && (
+                                                <div className="flex items-center mb-3 pb-3 border-b border-gray-100">
+                                                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                                                        <span className="text-purple-700 font-semibold text-sm">
+                                                            {feedback.user.name?.charAt(0).toUpperCase()}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-semibold text-gray-900">{feedback.user.name}</p>
+                                                        <p className="text-xs text-gray-500">{feedback.user.email}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Rating */}
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center space-x-1">
+                                                    <span className="text-lg font-bold text-yellow-500">{feedback.rating}⭐</span>
+                                                </div>
+                                                <span className="text-xs text-gray-500">
+                                                    {new Date(feedback.date).toLocaleDateString()}
+                                                </span>
+                                            </div>
+
+                                            {/* Comments */}
+                                            <p className="text-gray-700 text-sm">{feedback.comments}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <MessageSquare size={32} className="mx-auto text-gray-300 mb-3" />
+                                    <p className="text-gray-500">No feedback yet for this project</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

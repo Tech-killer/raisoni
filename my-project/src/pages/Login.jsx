@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-export default function Login({ setAuth }) {
+export default function Login({ setAuth, setAdmin }) {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     });
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const { email, password } = formData;
 
@@ -15,9 +16,19 @@ export default function Login({ setAuth }) {
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        
+        // Validate inputs
+        if (!email || !password) {
+            setError('Please fill in all fields');
+            return;
+        }
+
         try {
+            setLoading(true);
+            setError('');
+            
             const body = { email, password };
-            const response = await fetch('http://localhost:5000/api/auth/login', {
+            const response = await fetch('http://localhost:5001/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -27,15 +38,27 @@ export default function Login({ setAuth }) {
 
             if (response.ok) {
                 localStorage.setItem('token', parseRes.token);
+                localStorage.setItem('user', JSON.stringify(parseRes.user));
+                
+                // Check role from response
+                const isAdminUser = parseRes.user.role === 'admin';
+                if (isAdminUser) {
+                    localStorage.setItem('isAdmin', 'true');
+                    setAdmin(true);
+                }
+                
                 setAuth(true);
-                navigate('/Pages'); // Redirect to Dashboard
+                navigate(isAdminUser ? '/admin' : '/Pages');
             } else {
                 setAuth(false);
-                setError(parseRes.msg || 'Login Failed');
+                setError(parseRes.msg || 'Login failed. Please try again.');
             }
         } catch (err) {
             console.error(err.message);
-            setError('Server Connection Error');
+            setError('Server connection error. Please try again.');
+            setAuth(false);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -48,7 +71,11 @@ export default function Login({ setAuth }) {
             </div>
             <div className="w-full max-w-md p-8 rounded-2xl glass bg-white/40 dark:bg-black/40">
                 <h2 className="text-3xl font-bold text-center mb-6">Welcome Back</h2>
-                {error && <div className="text-red-500 text-center mb-4">{error}</div>}
+                {error && (
+                    <div className="text-red-500 text-center mb-4 p-3 bg-red-50 rounded-lg border border-red-200">
+                        {error}
+                    </div>
+                )}
                 <form onSubmit={handleLogin} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium mb-1">Email</label>
@@ -60,6 +87,7 @@ export default function Login({ setAuth }) {
                             className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none bg-white/50"
                             placeholder="hello@example.com"
                             required
+                            disabled={loading}
                         />
                     </div>
                     <div>
@@ -72,10 +100,15 @@ export default function Login({ setAuth }) {
                             className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none bg-white/50"
                             placeholder="••••••••"
                             required
+                            disabled={loading}
                         />
                     </div>
-                    <button type="submit" className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">
-                        Sign In
+                    <button 
+                        type="submit" 
+                        disabled={loading}
+                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-semibold transition-colors"
+                    >
+                        {loading ? 'Signing in...' : 'Sign In'}
                     </button>
                 </form>
                 <p className="mt-4 text-center text-sm">

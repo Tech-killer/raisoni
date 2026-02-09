@@ -9,6 +9,8 @@ export default function SignUp() {
         password: ''
     });
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const { name, email, password } = formData;
 
@@ -16,9 +18,24 @@ export default function SignUp() {
 
     const onSubmit = async e => {
         e.preventDefault();
+        
+        // Validate inputs
+        if (!name || !email || !password) {
+            setError('Please fill in all fields');
+            return;
+        }
+
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return;
+        }
+
         try {
+            setLoading(true);
+            setError('');
+            
             const body = { name, email, password };
-            const response = await fetch('http://localhost:5000/api/auth/register', {
+            const response = await fetch('http://localhost:5001/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -27,16 +44,19 @@ export default function SignUp() {
             const parseRes = await response.json();
 
             if (response.ok) {
-                // Successful registration
+                setSuccess('Registration successful! Redirecting to login...');
                 localStorage.setItem('token', parseRes.token);
-                // Optionally auto-login or redirect to login
-                navigate('/login');
+                setTimeout(() => {
+                    navigate('/login');
+                }, 2000);
             } else {
-                setError(parseRes.msg || 'Registration Error');
+                setError(parseRes.msg || 'Registration error. Please try again.');
             }
         } catch (err) {
             console.error(err.message);
-            setError('Server Connection Error');
+            setError('Server connection error. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -48,7 +68,16 @@ export default function SignUp() {
             </div>
             <div className="w-full max-w-md p-8 rounded-2xl glass bg-white/40 dark:bg-black/40">
                 <h2 className="text-3xl font-bold text-center mb-6">Create Account</h2>
-                {error && <div className="text-red-500 text-center mb-4">{error}</div>}
+                {error && (
+                    <div className="text-red-500 text-center mb-4 p-3 bg-red-50 rounded-lg border border-red-200">
+                        {error}
+                    </div>
+                )}
+                {success && (
+                    <div className="text-green-600 text-center mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                        {success}
+                    </div>
+                )}
                 <form className="space-y-4" onSubmit={onSubmit}>
                     <div>
                         <label className="block text-sm font-medium mb-1">Full Name</label>
@@ -60,6 +89,7 @@ export default function SignUp() {
                             className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none bg-white/50"
                             placeholder="John Doe"
                             required
+                            disabled={loading}
                         />
                     </div>
                     <div>
@@ -72,6 +102,7 @@ export default function SignUp() {
                             className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none bg-white/50"
                             placeholder="hello@example.com"
                             required
+                            disabled={loading}
                         />
                     </div>
                     <div>
@@ -84,10 +115,16 @@ export default function SignUp() {
                             className="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none bg-white/50"
                             placeholder="••••••••"
                             required
+                            disabled={loading}
                         />
+                        <p className="text-xs text-gray-600 mt-1">Min 6 characters</p>
                     </div>
-                    <button type="submit" className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">
-                        Sign Up
+                    <button 
+                        type="submit" 
+                        disabled={loading}
+                        className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-semibold transition-colors"
+                    >
+                        {loading ? 'Creating Account...' : 'Sign Up'}
                     </button>
                 </form>
                 <p className="mt-4 text-center text-sm">
