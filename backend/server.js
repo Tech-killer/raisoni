@@ -15,23 +15,10 @@ const app = express();
 
 // CORS Configuration - Allow both local and production URLs
 const corsOptions = {
-    origin: function(origin, callback) {
-        const allowedOrigins = [
-            'http://localhost:5173',
-            'http://localhost:3000',
-            process.env.FRONTEND_URL,
-            'https://raisoni.netlify.app',
-            'https://raisoni-frontend.netlify.app'
-        ].filter(Boolean);
-        
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            console.log('CORS blocked origin:', origin);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: true, // Allow all origins temporarily to debug connection issues
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'x-auth-token'],
     optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
