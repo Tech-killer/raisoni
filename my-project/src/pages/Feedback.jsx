@@ -20,7 +20,7 @@ export default function Feedback() {
     const fetchProjects = async () => {
         try {
             setLoadingProjects(true);
-            const response = await fetch('http://localhost:5001/api/projects');
+            const response = await fetch('https://raisoni.onrender.com/api/projects');
             
             if (response.ok) {
                 const data = await response.json();
@@ -74,7 +74,7 @@ export default function Feedback() {
             // Get selected project details
             const project = projects.find(p => p._id === selectedProject);
 
-            const response = await fetch('http://localhost:5001/api/feedback', {
+            const response = await fetch('https://raisoni.onrender.com/api/feedback', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

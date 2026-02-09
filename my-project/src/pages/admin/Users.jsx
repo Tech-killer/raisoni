@@ -27,7 +27,7 @@ export default function AdminUsers() {
             setLoading(true);
             setMessage('');
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5001/api/admin/users', {
+            const response = await fetch('https://raisoni.onrender.com/api/admin/users', {
                 headers: {
                     'x-auth-token': token
                 }
@@ -53,7 +53,7 @@ export default function AdminUsers() {
             setActionLoading(userId);
             setMessage('');
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5001/api/admin/make-admin', {
+            const response = await fetch('https://raisoni.onrender.com/api/admin/make-admin', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ export default function AdminUsers() {
             setActionLoading(userId);
             setMessage('');
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5001/api/admin/remove-admin', {
+            const response = await fetch('https://raisoni.onrender.com/api/admin/remove-admin', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -111,7 +111,7 @@ export default function AdminUsers() {
             setActionLoading(userId);
             setMessage('');
             const token = localStorage.getItem('token');
-            const response = await fetch(`http://localhost:5001/api/admin/users/${userId}`, {
+            const response = await fetch(`https://raisoni.onrender.com/api/admin/users/${userId}`, {
                 method: 'DELETE',
                 headers: {
                     'x-auth-token': token

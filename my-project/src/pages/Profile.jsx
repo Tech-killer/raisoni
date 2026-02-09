@@ -15,7 +15,7 @@ export default function Profile() {
                 setError('');
                 
                 const token = localStorage.getItem('token');
-                const response = await fetch('http://localhost:5001/api/auth', {
+                const response = await fetch('https://raisoni.onrender.com/api/auth', {
                     headers: {
                         'x-auth-token': token
                     }
@@ -46,7 +46,7 @@ export default function Profile() {
     const fetchUserFeedback = async (token, userId) => {
         try {
             setFeedbackLoading(true);
-            const response = await fetch('http://localhost:5001/api/feedback', {
+            const response = await fetch('https://raisoni.onrender.com/api/feedback', {
                 headers: {
                     'x-auth-token': token
                 }
