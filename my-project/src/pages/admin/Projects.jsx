@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Search } from 'lucide-react';
+import { fetchAPI } from '../../utils/api';
 
 export default function AdminProjects() {
     const [projects, setProjects] = useState([]);
@@ -40,17 +41,11 @@ export default function AdminProjects() {
         try {
             setLoading(true);
             setMessage('');
-            const token = localStorage.getItem('token');
-            const response = await fetch('https://raisoni.onrender.com/api/projects', {
-                headers: {
-                    'x-auth-token': token
-                }
-            });
+            const result = await fetchAPI('/projects');
 
-            if (response.ok) {
-                const data = await response.json();
-                setProjects(data);
-                setFilteredProjects(data);
+            if (result.success) {
+                setProjects(result.data);
+                setFilteredProjects(result.data);
             } else {
                 setMessage('❌ Failed to fetch projects');
             }

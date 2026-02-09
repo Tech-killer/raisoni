@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Star, MapPin, Briefcase } from 'lucide-react';
+import { fetchAPI } from '../utils/api';
 
 export default function Feedback() {
     const navigate = useNavigate();
@@ -20,11 +21,10 @@ export default function Feedback() {
     const fetchProjects = async () => {
         try {
             setLoadingProjects(true);
-            const response = await fetch('https://raisoni.onrender.com/api/projects');
+            const result = await fetchAPI('/projects');
             
-            if (response.ok) {
-                const data = await response.json();
-                setProjects(data);
+            if (result.success) {
+                setProjects(result.data);
             } else {
                 setMessage('❌ Failed to load projects');
             }
@@ -74,12 +74,8 @@ export default function Feedback() {
             // Get selected project details
             const project = projects.find(p => p._id === selectedProject);
 
-            const response = await fetch('https://raisoni.onrender.com/api/feedback', {
+            const result = await fetchAPI('/feedback', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-auth-token': token
-                },
                 body: JSON.stringify({
                     projectId: project._id,
                     projectTitle: project.title,
@@ -89,15 +85,14 @@ export default function Feedback() {
                 })
             });
 
-            if (response.ok) {
+            if (result.success) {
                 setMessage('✅ Feedback submitted successfully!');
                 setSelectedProject('');
                 setRating(0);
                 setComments('');
                 setTimeout(() => navigate('/Pages'), 2000);
             } else {
-                const errorData = await response.json();
-                setMessage(`❌ ${errorData.msg || 'Error submitting feedback'}`);
+                setMessage(`❌ ${result.error || 'Error submitting feedback'}`);
             }
         } catch (err) {
             console.error('Error:', err);

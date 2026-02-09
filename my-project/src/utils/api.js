@@ -1,7 +1,8 @@
 // API Configuration and utilities
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://raisoni.onrender.com/api';
+const API_TIMEOUT = 15000; // 15 seconds timeout
 
-// Reusable fetch wrapper with error handling
+// Reusable fetch wrapper with error handling and timeout
 export const fetchAPI = async (endpoint, options = {}) => {
     const token = localStorage.getItem('token');
     
@@ -14,10 +15,17 @@ export const fetchAPI = async (endpoint, options = {}) => {
         headers['x-auth-token'] = token;
     }
 
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+
     try {
+        console.log(`🔄 API Request: ${options.method || 'GET'} ${API_BASE_URL}${endpoint}`);
+        
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             ...options,
             headers,
+            signal: controller.signal,
         });
 
         const data = await response.json();
@@ -26,10 +34,20 @@ export const fetchAPI = async (endpoint, options = {}) => {
             throw new Error(data.msg || `Error: ${response.status}`);
         }
 
+        console.log(`✅ API Success: ${endpoint}`);
         return { success: true, data };
     } catch (error) {
-        console.error('API Error:', error);
+        if (error.name === 'AbortError') {
+            console.error('⏱️ API Timeout - Backend server not responding');
+            return { 
+                success: false, 
+                error: 'Server connection timeout. Backend may be starting up. Please try again in a moment.' 
+            };
+        }
+        console.error(`❌ API Error (${endpoint}):`, error.message);
         return { success: false, error: error.message };
+    } finally {
+        clearTimeout(timeoutId);
     }
 };
 

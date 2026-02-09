@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Mail, Calendar, CheckCircle, Star, Briefcase, MapPin, Trash2 } from 'lucide-react';
+import { fetchAPI } from '../utils/api';
 
 export default function Profile() {
     const [user, setUser] = useState(null);
@@ -14,23 +15,17 @@ export default function Profile() {
                 setLoading(true);
                 setError('');
                 
-                const token = localStorage.getItem('token');
-                const response = await fetch('https://raisoni.onrender.com/api/auth', {
-                    headers: {
-                        'x-auth-token': token
+                const result = await fetchAPI('/auth');
+                
+                if (result.success) {
+                    setUser(result.data);
+                    
+                    // Fetch user's feedback AFTER user data is loaded
+                    if (result.data && result.data._id) {
+                        await fetchUserFeedback(result.data._id);
                     }
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch user profile');
-                }
-                
-                const data = await response.json();
-                setUser(data);
-                
-                // Fetch user's feedback AFTER user data is loaded
-                if (data && data._id) {
-                    await fetchUserFeedback(token, data._id);
+                } else {
+                    throw new Error(result.error || 'Failed to fetch user profile');
                 }
             } catch (err) {
                 console.error('Error fetching user:', err);
@@ -43,17 +38,13 @@ export default function Profile() {
         fetchProfile();
     }, []);
 
-    const fetchUserFeedback = async (token, userId) => {
+    const fetchUserFeedback = async (userId) => {
         try {
             setFeedbackLoading(true);
-            const response = await fetch('https://raisoni.onrender.com/api/feedback', {
-                headers: {
-                    'x-auth-token': token
-                }
-            });
+            const result = await fetchAPI('/feedback');
             
-            if (response.ok) {
-                const data = await response.json();
+            if (result.success) {
+                const data = result.data;
                 
                 // Temporarily show ALL feedback for debugging
                 // Filter only for user once we confirm it's working

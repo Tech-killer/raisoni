@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Trash2, Search, User, Mail, Calendar, Shield, ShieldOff } from 'lucide-react';
+import { fetchAPI } from '../../utils/api';
 
 export default function AdminUsers() {
     const [users, setUsers] = useState([]);
@@ -26,17 +27,11 @@ export default function AdminUsers() {
         try {
             setLoading(true);
             setMessage('');
-            const token = localStorage.getItem('token');
-            const response = await fetch('https://raisoni.onrender.com/api/admin/users', {
-                headers: {
-                    'x-auth-token': token
-                }
-            });
+            const result = await fetchAPI('/admin/users');
 
-            if (response.ok) {
-                const usersData = await response.json();
-                setUsers(usersData);
-                setFilteredUsers(usersData);
+            if (result.success) {
+                setUsers(result.data);
+                setFilteredUsers(result.data);
             } else {
                 setMessage('❌ Failed to fetch users');
             }
@@ -52,22 +47,16 @@ export default function AdminUsers() {
         try {
             setActionLoading(userId);
             setMessage('');
-            const token = localStorage.getItem('token');
-            const response = await fetch('https://raisoni.onrender.com/api/admin/make-admin', {
+            const result = await fetchAPI('/admin/make-admin', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-auth-token': token
-                },
                 body: JSON.stringify({ userId })
             });
 
-            if (response.ok) {
+            if (result.success) {
                 setMessage('✅ User promoted to admin');
                 fetchUsers();
             } else {
-                const error = await response.json();
-                setMessage(`❌ ${error.msg}`);
+                setMessage(`❌ ${result.error}`);
             }
         } catch (error) {
             console.error('Error promoting user:', error);
@@ -81,22 +70,16 @@ export default function AdminUsers() {
         try {
             setActionLoading(userId);
             setMessage('');
-            const token = localStorage.getItem('token');
-            const response = await fetch('https://raisoni.onrender.com/api/admin/remove-admin', {
+            const result = await fetchAPI('/admin/remove-admin', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-auth-token': token
-                },
                 body: JSON.stringify({ userId })
             });
 
-            if (response.ok) {
+            if (result.success) {
                 setMessage('✅ Admin demoted to user');
                 fetchUsers();
             } else {
-                const error = await response.json();
-                setMessage(`❌ ${error.msg}`);
+                setMessage(`❌ ${result.error}`);
             }
         } catch (error) {
             console.error('Error demoting admin:', error);
@@ -110,22 +93,17 @@ export default function AdminUsers() {
         try {
             setActionLoading(userId);
             setMessage('');
-            const token = localStorage.getItem('token');
-            const response = await fetch(`https://raisoni.onrender.com/api/admin/users/${userId}`, {
-                method: 'DELETE',
-                headers: {
-                    'x-auth-token': token
-                }
+            const result = await fetchAPI(`/admin/users/${userId}`, {
+                method: 'DELETE'
             });
 
-            if (response.ok) {
+            if (result.success) {
                 setMessage('✅ User deleted successfully');
                 setUsers(users.filter(u => u._id !== userId));
                 setDeleteConfirm(null);
                 fetchUsers();
             } else {
-                const error = await response.json();
-                setMessage(`❌ ${error.msg}`);
+                setMessage(`❌ ${result.error}`);
             }
         } catch (error) {
             console.error('Error deleting user:', error);

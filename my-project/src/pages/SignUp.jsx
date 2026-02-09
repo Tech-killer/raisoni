@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { fetchAPI } from '../utils/api';
 
 export default function SignUp() {
     const navigate = useNavigate();
@@ -34,27 +35,23 @@ export default function SignUp() {
             setLoading(true);
             setError('');
             
-            const body = { name, email, password };
-            const response = await fetch('https://raisoni.onrender.com/api/auth/register', {
+            const result = await fetchAPI('/auth/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
+                body: JSON.stringify({ name, email, password }),
             });
 
-            const parseRes = await response.json();
-
-            if (response.ok) {
+            if (result.success) {
                 setSuccess('Registration successful! Redirecting to login...');
-                localStorage.setItem('token', parseRes.token);
+                localStorage.setItem('token', result.data.token);
                 setTimeout(() => {
                     navigate('/login');
                 }, 2000);
             } else {
-                setError(parseRes.msg || 'Registration error. Please try again.');
+                setError(result.error || 'Registration error. Please try again.');
             }
         } catch (err) {
-            console.error(err.message);
-            setError('Server connection error. Please try again.');
+            console.error('SignUp error:', err);
+            setError('An unexpected error occurred. Please try again.');
         } finally {
             setLoading(false);
         }

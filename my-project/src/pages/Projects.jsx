@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, MapPin, Star, MessageSquare, X, RefreshCw } from 'lucide-react';
+import { fetchAPI } from '../utils/api';
 
 export default function Projects() {
     const [projects, setProjects] = useState([]);
@@ -40,11 +41,12 @@ export default function Projects() {
     const fetchProjects = async () => {
         try {
             setLoading(true);
-            const response = await fetch('https://raisoni.onrender.com/api/projects');
+            const result = await fetchAPI('/projects');
             
-            if (response.ok) {
-                const data = await response.json();
-                setProjects(data);
+            if (result.success) {
+                setProjects(result.data);
+            } else {
+                console.error('Failed to fetch projects:', result.error);
             }
         } catch (error) {
             console.error('Error fetching projects:', error);
@@ -95,10 +97,10 @@ export default function Projects() {
     const fetchProjectFeedback = async (projectId) => {
         try {
             setFeedbackLoading(true);
-const response = await fetch('https://raisoni.onrender.com/api/feedback');
+            const result = await fetchAPI('/feedback');
             
-            if (response.ok) {
-                const allFeedback = await response.json();
+            if (result.success) {
+                const allFeedback = result.data;
                 // Filter feedback for this specific project (handle both string and object projectId)
                 const filtered = allFeedback.filter(f => 
                     f.projectId === projectId || 
@@ -106,6 +108,8 @@ const response = await fetch('https://raisoni.onrender.com/api/feedback');
                     (typeof f.projectId === 'object' && f.projectId === projectId)
                 );
                 setProjectFeedback(filtered);
+            } else {
+                console.error('Failed to fetch feedback:', result.error);
             }
         } catch (error) {
             console.error('Error fetching feedback:', error);

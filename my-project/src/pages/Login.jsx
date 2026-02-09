@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { fetchAPI } from '../utils/api';
 
 export default function Login({ setAuth, setAdmin }) {
     const navigate = useNavigate();
@@ -27,21 +28,17 @@ export default function Login({ setAuth, setAdmin }) {
             setLoading(true);
             setError('');
             
-            const body = { email, password };
-            const response = await fetch('https://raisoni.onrender.com/api/auth/login', {
+            const result = await fetchAPI('/auth/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
+                body: JSON.stringify({ email, password }),
             });
 
-            const parseRes = await response.json();
-
-            if (response.ok) {
-                localStorage.setItem('token', parseRes.token);
-                localStorage.setItem('user', JSON.stringify(parseRes.user));
+            if (result.success) {
+                localStorage.setItem('token', result.data.token);
+                localStorage.setItem('user', JSON.stringify(result.data.user));
                 
                 // Check role from response
-                const isAdminUser = parseRes.user.role === 'admin';
+                const isAdminUser = result.data.user.role === 'admin';
                 if (isAdminUser) {
                     localStorage.setItem('isAdmin', 'true');
                     setAdmin(true);
@@ -51,11 +48,11 @@ export default function Login({ setAuth, setAdmin }) {
                 navigate(isAdminUser ? '/admin' : '/Pages');
             } else {
                 setAuth(false);
-                setError(parseRes.msg || 'Login failed. Please try again.');
+                setError(result.error || 'Login failed. Please try again.');
             }
         } catch (err) {
-            console.error(err.message);
-            setError('Server connection error. Please try again.');
+            console.error('Login error:', err);
+            setError('An unexpected error occurred. Please try again.');
             setAuth(false);
         } finally {
             setLoading(false);
