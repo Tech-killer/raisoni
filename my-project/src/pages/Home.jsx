@@ -1,8 +1,43 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, MessageSquare, MapPin, Activity, CheckCircle2, Clock, Info, ShieldCheck, BarChart3, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { fetchAPI } from '../utils/api';
 
 export default function Home() {
+    const [featuredProjects, setFeaturedProjects] = useState([]);
+    const [projectsLoading, setProjectsLoading] = useState(true);
+
+    useEffect(() => {
+        fetchFeaturedProjects();
+    }, []);
+
+    const fetchFeaturedProjects = async () => {
+        try {
+            setProjectsLoading(true);
+            const result = await fetchAPI('/projects');
+            
+            if (result.success) {
+                // Get first 3 projects for featured section
+                setFeaturedProjects(result.data.slice(0, 3));
+            }
+        } catch (error) {
+            console.error('Error fetching featured projects:', error);
+        } finally {
+            setProjectsLoading(false);
+        }
+    };
+
+    const getStatusColor = (status) => {
+        const colorMap = {
+            'On Track': 'text-green-600 bg-green-100',
+            'On hold': 'text-yellow-600 bg-yellow-100',
+            'Behind': 'text-red-600 bg-red-100',
+            'Completed': 'text-blue-600 bg-blue-100'
+        };
+        return colorMap[status] || 'text-gray-600 bg-gray-100';
+    };
+
     const features = [
         {
             icon: MapPin,
@@ -23,36 +58,6 @@ export default function Home() {
             icon: ShieldCheck,
             title: "Track Resolution",
             desc: "Monitor authority responses and issue resolution."
-        }
-    ];
-
-    const projects = [
-        {
-            status: "In Progress",
-            statusColor: "text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400",
-            rating: 4.2,
-            name: "Renovation of a School Project",
-            location: "New York",
-            type: "Renovation",
-            feedback: 3
-        },
-        {
-            status: "Delayed",
-            statusColor: "text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400",
-            rating: 3.1,
-            name: "Commercial Center Construction Project",
-            location: "Georgia",
-            type: "Construction",
-            feedback: 9
-        },
-        {
-            status: "On Track",
-            statusColor: "text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400",
-            rating: 4.5,
-            name: "Sports Stadium Upgrade Project",
-            location: "Florida",
-            type: "other",
-            feedback: 6
         }
     ];
 
@@ -152,44 +157,58 @@ export default function Home() {
                         </Link>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {projects.map((project, i) => (
-                            <motion.div
-                                key={i}
-                                whileHover={{ y: -5 }}
-                                className="group bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-xl transition-all"
-                            >
-                                <div className="p-6">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${project.statusColor.split(' dark:')[0]}`}>
-                                            {project.status}
-                                        </span>
-                                        <span className="flex items-center text-sm font-bold text-yellow-500">
-                                            {project.rating} ⭐
-                                        </span>
-                                    </div>
-                                    <h3 className="text-xl font-bold mb-2 group-hover:text-blue-600 transition-colors">{project.name}</h3>
-                                    <div className="flex items-center text-gray-500 text-sm mb-4">
-                                        <MapPin size={14} className="mr-1" />
-                                        {project.location}
-                                    </div>
+                    {projectsLoading ? (
+                        <div className="text-center py-12">
+                            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                            <p className="text-gray-600 mt-4">Loading featured projects...</p>
+                        </div>
+                    ) : featuredProjects.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {featuredProjects.map((project) => (
+                                <motion.div
+                                    key={project._id}
+                                    whileHover={{ y: -5 }}
+                                    className="group bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-xl transition-all"
+                                >
+                                    <div className="p-6">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(project.status)}`}>
+                                                {project.status}
+                                            </span>
+                                            <span className="flex items-center text-sm font-bold text-yellow-500">
+                                                {project.rating ? project.rating.toFixed(1) : 'N/A'} ⭐
+                                            </span>
+                                        </div>
+                                        <h3 className="text-xl font-bold mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">{project.title}</h3>
+                                        <div className="flex items-center text-gray-500 text-sm mb-4">
+                                            <MapPin size={14} className="mr-1 flex-shrink-0" />
+                                            <span className="truncate">{project.state}</span>
+                                        </div>
 
-                                    <div className="flex justify-between items-center border-t border-gray-100 pt-4 mt-4">
-                                        <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-600">
-                                            {project.type}
-                                        </span>
-                                        <span className="text-xs text-gray-500">
-                                            {project.feedback} feedback
-                                        </span>
-                                    </div>
+                                        <div className="flex justify-between items-center border-t border-gray-100 pt-4 mt-4">
+                                            <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-600 capitalize">
+                                                {project.sector}
+                                            </span>
+                                            <span className="text-xs text-gray-500 font-medium">
+                                                {project.feedbackCount || 0} feedback
+                                            </span>
+                                        </div>
 
-                                    <button className="w-full mt-6 py-2 rounded-lg border border-gray-200 hover:bg-gray-900 hover:text-white transition-colors text-sm font-semibold flex items-center justify-center">
-                                        View Details <ArrowRight size={14} className="ml-2" />
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ))}
-                    </div>
+                                        <Link 
+                                            to="/projects" 
+                                            className="w-full mt-6 py-2 rounded-lg border border-gray-200 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors text-sm font-semibold flex items-center justify-center group/btn"
+                                        >
+                                            View Details <ArrowRight size={14} className="ml-2 group-hover/btn:translate-x-1 transition-transform" />
+                                        </Link>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12">
+                            <p className="text-gray-500">No projects available at the moment.</p>
+                        </div>
+                    )}
 
                     <div className="mt-8 text-center md:hidden">
                         <Link to="/projects" className="inline-flex items-center text-blue-600 font-semibold hover:underline">
